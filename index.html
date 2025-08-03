@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Play the classic Tetris game online. A beautiful HTML5 Tetris game with modern design and smooth gameplay.">
+    <meta name="keywords" content="tetris, game, puzzle, html5, online game, classic game">
+    <meta name="author" content="Tetris Game">
+    <meta name="robots" content="index, follow">
+    <title>Tetris - Classic Puzzle Game</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 class="game-title">TETRIS</h1>
+            <p class="subtitle">Classic HTML5 Tetris Game</p>
+        </header>
+
+        <main class="game-container">
+            <div class="game-area">
+                <canvas id="gameCanvas" width="300" height="600"></canvas>
+                <div class="game-overlay" id="gameOverlay">
+                    <div class="overlay-content">
+                        <h2>Game Over</h2>
+                        <p>Final Score: <span id="finalScore">0</span></p>
+                        <button class="btn btn-primary" onclick="resetGame()">Play Again</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-info">
+                <div class="next-piece">
+                    <h3>Next Piece</h3>
+                    <canvas id="nextCanvas" width="120" height="120"></canvas>
+                </div>
+
+                <div class="score-board">
+                    <div class="score-item">
+                        <span class="label">Score:</span>
+                        <span class="value" id="score">0</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="label">Level:</span>
+                        <span class="value" id="level">1</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="label">Lines:</span>
+                        <span class="value" id="lines">0</span>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="btn btn-start" id="startBtn" onclick="startGame()">Start Game</button>
+                    <button class="btn btn-pause" id="pauseBtn" onclick="pauseGame()" disabled>Pause</button>
+                    <button class="btn btn-reset" onclick="resetGame()">Reset</button>
+                </div>
+            </div>
+        </main>
+
+        <footer class="instructions">
+            <h3>How to Play</h3>
+            <div class="key-controls">
+                <div class="key-item">
+                    <span class="key">← →</span>
+                    <span class="description">Move Left/Right</span>
+                </div>
+                <div class="key-item">
+                    <span class="key">↑</span>
+                    <span class="description">Rotate</span>
+                </div>
+                <div class="key-item">
+                    <span class="key">↓</span>
+                    <span class="description">Soft Drop</span>
+                </div>
+                <div class="key-item">
+                    <span class="key">Space</span>
+                    <span class="description">Hard Drop</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="tetris.js"></script>
+</body>
+</html> 
