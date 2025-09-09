@@ -48,7 +48,7 @@ const COLORS = {
 // Game state
 let gameBoard = [];
 let currentPiece = null;
-let nextPiece = null;
+let nextPieces = []; // 存储3个未来方块
 let score = 0;
 let level = 1;
 let lines = 0;
@@ -61,8 +61,12 @@ let lastTime = 0;
 // Canvas elements
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-const nextCanvas = document.getElementById('nextCanvas');
-const nextCtx = nextCanvas.getContext('2d');
+const nextCanvas1 = document.getElementById('nextCanvas1');
+const nextCtx1 = nextCanvas1.getContext('2d');
+const nextCanvas2 = document.getElementById('nextCanvas2');
+const nextCtx2 = nextCanvas2.getContext('2d');
+const nextCanvas3 = document.getElementById('nextCanvas3');
+const nextCtx3 = nextCanvas3.getContext('2d');
 
 // DOM elements
 const scoreElement = document.getElementById('score');
@@ -100,6 +104,21 @@ function createPiece(type) {
 function getRandomPiece() {
     const types = Object.keys(SHAPES);
     return types[Math.floor(Math.random() * types.length)];
+}
+
+// Initialize next pieces queue
+function initNextPieces() {
+    nextPieces = [];
+    for (let i = 0; i < 3; i++) {
+        nextPieces.push(createPiece(getRandomPiece()));
+    }
+}
+
+// Get next piece from queue and add new one
+function getNextPiece() {
+    const piece = nextPieces.shift(); // 移除第一个方块
+    nextPieces.push(createPiece(getRandomPiece())); // 添加新的方块到队列末尾
+    return piece;
 }
 
 // Draw a single block
@@ -162,18 +181,24 @@ function drawPiece(ctx, piece) {
     }
 }
 
-// Draw next piece
-function drawNextPiece() {
-    nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
+// Draw next pieces
+function drawNextPieces() {
+    const canvases = [nextCanvas1, nextCanvas2, nextCanvas3];
+    const contexts = [nextCtx1, nextCtx2, nextCtx3];
     
-    if (nextPiece) {
-        const offsetX = (nextCanvas.width / BLOCK_SIZE - nextPiece.shape[0].length) / 2;
-        const offsetY = (nextCanvas.height / BLOCK_SIZE - nextPiece.shape.length) / 2;
+    for (let i = 0; i < 3; i++) {
+        contexts[i].clearRect(0, 0, canvases[i].width, canvases[i].height);
         
-        for (let y = 0; y < nextPiece.shape.length; y++) {
-            for (let x = 0; x < nextPiece.shape[y].length; x++) {
-                if (nextPiece.shape[y][x]) {
-                    drawBlock(nextCtx, offsetX + x, offsetY + y, nextPiece.color);
+        if (nextPieces[i]) {
+            const piece = nextPieces[i];
+            const offsetX = (canvases[i].width / BLOCK_SIZE - piece.shape[0].length) / 2;
+            const offsetY = (canvases[i].height / BLOCK_SIZE - piece.shape.length) / 2;
+            
+            for (let y = 0; y < piece.shape.length; y++) {
+                for (let x = 0; x < piece.shape[y].length; x++) {
+                    if (piece.shape[y][x]) {
+                        drawBlock(contexts[i], offsetX + x, offsetY + y, piece.color);
+                    }
                 }
             }
         }
@@ -293,14 +318,13 @@ function hardDrop() {
 
 // Spawn new piece
 function spawnPiece() {
-    currentPiece = nextPiece || createPiece(getRandomPiece());
-    nextPiece = createPiece(getRandomPiece());
+    currentPiece = getNextPiece();
     
     if (isCollision(currentPiece)) {
         gameOver();
     }
     
-    drawNextPiece();
+    drawNextPieces();
 }
 
 // Game over
@@ -348,6 +372,7 @@ function gameLoop(currentTime) {
 function startGame() {
     if (!gameRunning) {
         initBoard();
+        initNextPieces();
         score = 0;
         level = 1;
         lines = 0;
@@ -380,15 +405,15 @@ function resetGame() {
     gameRunning = false;
     gamePaused = false;
     initBoard();
+    initNextPieces();
     score = 0;
     level = 1;
     lines = 0;
     currentPiece = null;
-    nextPiece = null;
     
     updateDisplay();
     drawBoard();
-    drawNextPiece();
+    drawNextPieces();
     
     startBtn.disabled = false;
     pauseBtn.disabled = true;
@@ -430,8 +455,9 @@ document.addEventListener('keydown', (e) => {
 // Initialize game
 function init() {
     initBoard();
+    initNextPieces();
     drawBoard();
-    drawNextPiece();
+    drawNextPieces();
     updateDisplay();
 }
 
