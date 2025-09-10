@@ -45,6 +45,22 @@ const COLORS = {
     L: '#ffa500'
 };
 
+// Special color for garbage blocks
+const GARBAGE_COLOR = 'DEMON_LOGO'; // 使用恶魔头像
+const GARBAGE_EMPTY_COLOR = '#000000'; // 垃圾行中的空位显示为背景色（黑色）
+
+// Load demon logo image
+let demonLogo = null;
+const logoImage = new Image();
+logoImage.onload = function() {
+    demonLogo = logoImage;
+    console.log("Demon logo loaded successfully");
+};
+logoImage.onerror = function() {
+    console.log("Failed to load demon logo, using fallback color");
+};
+logoImage.src = 'logo1.png';
+
 // Game state
 let gameBoard = [];
 let currentPiece = null;
@@ -57,6 +73,12 @@ let gamePaused = false;
 let dropTime = 0;
 let dropInterval = 1000;
 let lastTime = 0;
+
+// Garbage line system
+let garbageTimer = 0;
+let garbageInterval = 5000; // 5 seconds (增加间隔)
+let garbageLinesCleared = 0;
+let gameStartTime = 0;
 
 // Canvas elements
 const canvas = document.getElementById('gameCanvas');
@@ -72,6 +94,7 @@ const nextCtx3 = nextCanvas3.getContext('2d');
 const scoreElement = document.getElementById('score');
 const levelElement = document.getElementById('level');
 const linesElement = document.getElementById('lines');
+const garbageClearedElement = document.getElementById('garbageCleared');
 const startBtn = document.getElementById('startBtn');
 const pauseBtn = document.getElementById('pauseBtn');
 const gameOverlay = document.getElementById('gameOverlay');
@@ -121,18 +144,157 @@ function getNextPiece() {
     return piece;
 }
 
+// Generate a garbage line
+function generateGarbageLine() {
+    const garbageLine = new Array(BOARD_WIDTH).fill(GARBAGE_COLOR);
+    const emptyPosition = Math.floor(Math.random() * BOARD_WIDTH);
+    garbageLine[emptyPosition] = GARBAGE_EMPTY_COLOR; // 留一个空位，用特殊颜色标记
+    
+    console.log("Generated garbage line with empty position:", emptyPosition);
+    return garbageLine;
+}
+
+// Insert garbage line at bottom and shift everything up
+function insertGarbageLine() {
+    console.log("Generating garbage line...");
+    
+    // 检查游戏板是否有方块
+    let hasBlocks = false;
+    for (let y = 0; y < BOARD_HEIGHT; y++) {
+        for (let x = 0; x < BOARD_WIDTH; x++) {
+            if (gameBoard[y][x] !== 0 && gameBoard[y][x] !== GARBAGE_COLOR && gameBoard[y][x] !== GARBAGE_EMPTY_COLOR) {
+                hasBlocks = true;
+                break;
+            }
+        }
+        if (hasBlocks) break;
+    }
+    
+    if (hasBlocks) {
+        console.log("Game board has blocks, shifting up...");
+        // 移除顶部一行
+        gameBoard.pop();
+        // 在底部插入新的垃圾行
+        gameBoard.unshift(generateGarbageLine());
+    } else {
+        console.log("Game board is empty, inserting at bottom...");
+        // 如果游戏板是空的，直接在底部插入垃圾行
+        gameBoard[BOARD_HEIGHT - 1] = generateGarbageLine();
+    }
+    
+    console.log("Garbage line inserted. Game board length:", gameBoard.length);
+    console.log("Bottom row:", gameBoard[BOARD_HEIGHT - 1]);
+    console.log("Top row:", gameBoard[0]);
+    
+    // 检查游戏是否结束（垃圾行到达顶部）
+    checkGameOverFromGarbage();
+}
+
+// Check if game should end due to garbage lines
+function checkGameOverFromGarbage() {
+    // 检查顶部是否有垃圾方块
+    let garbageCount = 0;
+    for (let x = 0; x < BOARD_WIDTH; x++) {
+        if (gameBoard[0][x] === GARBAGE_COLOR || gameBoard[0][x] === GARBAGE_EMPTY_COLOR) {
+            garbageCount++;
+        }
+    }
+    
+    console.log("Top row garbage count:", garbageCount, "out of", BOARD_WIDTH);
+    
+    // 只有当顶部大部分位置都是垃圾方块时才结束游戏（给玩家一些生存空间）
+    if (garbageCount >= BOARD_WIDTH - 2) {
+        console.log("Game over due to garbage lines!");
+        gameOver();
+        return;
+    }
+}
+
 // Draw a single block
 function drawBlock(ctx, x, y, color) {
     ctx.fillStyle = color;
     ctx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
     
-    // Add highlight effect
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-    ctx.fillRect(x * BLOCK_SIZE + 2, y * BLOCK_SIZE + 2, BLOCK_SIZE - 4, 4);
-    ctx.fillRect(x * BLOCK_SIZE + 2, y * BLOCK_SIZE + 2, 4, BLOCK_SIZE - 4);
+    // Different styling for garbage blocks
+    if (color === GARBAGE_COLOR) {
+        // 垃圾方块：使用恶魔头像
+        const blockX = x * BLOCK_SIZE;
+        const blockY = y * BLOCK_SIZE;
+        
+        // 背景填充（深灰色）
+        ctx.fillStyle = '#2a2a2a';
+        ctx.fillRect(blockX, blockY, BLOCK_SIZE, BLOCK_SIZE);
+        
+        // 绘制恶魔头像
+        if (demonLogo) {
+            // 计算头像位置和大小，留出边框空间
+            const logoSize = BLOCK_SIZE - 4;
+            const logoX = blockX + 2;
+            const logoY = blockY + 2;
+            
+            // 绘制恶魔头像
+            ctx.drawImage(demonLogo, logoX, logoY, logoSize, logoSize);
+        } else {
+            // 如果头像未加载，使用备用颜色
+            ctx.fillStyle = '#4a4a4a';
+            ctx.fillRect(blockX + 2, blockY + 2, BLOCK_SIZE - 4, BLOCK_SIZE - 4);
+            
+            // 添加备用纹理
+            ctx.fillStyle = '#666666';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('👹', blockX + BLOCK_SIZE/2, blockY + BLOCK_SIZE/2 + 5);
+        }
+        
+        // 立体效果：顶部和左侧高光
+        ctx.fillStyle = '#4a4a4a';
+        ctx.fillRect(blockX, blockY, BLOCK_SIZE, 2); // 顶部高光
+        ctx.fillRect(blockX, blockY, 2, BLOCK_SIZE); // 左侧高光
+        
+        // 立体效果：底部和右侧阴影
+        ctx.fillStyle = '#1a1a1a';
+        ctx.fillRect(blockX, blockY + BLOCK_SIZE - 2, BLOCK_SIZE, 2); // 底部阴影
+        ctx.fillRect(blockX + BLOCK_SIZE - 2, blockY, 2, BLOCK_SIZE); // 右侧阴影
+        
+        // 外边框
+        ctx.strokeStyle = '#666666';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(blockX, blockY, BLOCK_SIZE, BLOCK_SIZE);
+        
+    } else if (color === GARBAGE_EMPTY_COLOR) {
+        // 垃圾行空位：显示为背景色，但有特殊轮廓
+        const blockX = x * BLOCK_SIZE;
+        const blockY = y * BLOCK_SIZE;
+        
+        // 背景色填充
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(blockX, blockY, BLOCK_SIZE, BLOCK_SIZE);
+        
+        // 虚线边框表示这是垃圾行的空位
+        ctx.strokeStyle = '#666666';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 4]);
+        ctx.strokeRect(blockX + 1, blockY + 1, BLOCK_SIZE - 2, BLOCK_SIZE - 2);
+        ctx.setLineDash([]);
+        
+        // 内部虚线
+        ctx.strokeStyle = '#444444';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2, 2]);
+        ctx.strokeRect(blockX + 4, blockY + 4, BLOCK_SIZE - 8, BLOCK_SIZE - 8);
+        ctx.setLineDash([]);
+        
+    } else {
+        // 普通方块
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+        
+        // Add highlight effect for normal blocks
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fillRect(x * BLOCK_SIZE + 2, y * BLOCK_SIZE + 2, BLOCK_SIZE - 4, 4);
+        ctx.fillRect(x * BLOCK_SIZE + 2, y * BLOCK_SIZE + 2, 4, BLOCK_SIZE - 4);
+    }
 }
 
 // Draw the game board
@@ -242,6 +404,7 @@ function placePiece() {
 // Clear completed lines
 function clearLines() {
     let linesCleared = 0;
+    let garbageLinesInCleared = 0;
     
     for (let y = BOARD_HEIGHT - 1; y >= 0; y--) {
         let isComplete = true;
@@ -253,6 +416,19 @@ function clearLines() {
         }
         
         if (isComplete) {
+            // Check if this line contains garbage blocks
+            let hasGarbage = false;
+            for (let x = 0; x < BOARD_WIDTH; x++) {
+                if (gameBoard[y][x] === GARBAGE_COLOR) {
+                    hasGarbage = true;
+                    break;
+                }
+            }
+            
+            if (hasGarbage) {
+                garbageLinesInCleared++;
+            }
+            
             gameBoard.splice(y, 1);
             gameBoard.unshift(new Array(BOARD_WIDTH).fill(0));
             linesCleared++;
@@ -262,7 +438,15 @@ function clearLines() {
     
     if (linesCleared > 0) {
         lines += linesCleared;
-        score += linesCleared * 100 * level;
+        garbageLinesCleared += garbageLinesInCleared;
+        
+        // Base score for clearing lines
+        let baseScore = linesCleared * 100 * level;
+        
+        // Bonus score for clearing garbage lines
+        let garbageBonus = garbageLinesInCleared * 200 * level;
+        
+        score += baseScore + garbageBonus;
         level = Math.floor(lines / 10) + 1;
         dropInterval = Math.max(100, 1000 - (level - 1) * 100);
         
@@ -273,6 +457,11 @@ function clearLines() {
         setTimeout(() => {
             scoreElement.classList.remove('score-update');
         }, 300);
+        
+        // Show garbage line clear bonus if applicable
+        if (garbageLinesInCleared > 0) {
+            console.log(`Cleared ${garbageLinesInCleared} garbage line(s)! Bonus: ${garbageBonus} points`);
+        }
     }
 }
 
@@ -342,6 +531,7 @@ function updateDisplay() {
     scoreElement.textContent = score;
     levelElement.textContent = level;
     linesElement.textContent = lines;
+    garbageClearedElement.textContent = garbageLinesCleared;
 }
 
 // Game loop
@@ -353,7 +543,9 @@ function gameLoop(currentTime) {
     
     const deltaTime = currentTime - lastTime;
     dropTime += deltaTime;
+    garbageTimer += deltaTime;
     
+    // Handle piece dropping
     if (dropTime >= dropInterval) {
         if (!movePiece(0, 1)) {
             placePiece();
@@ -361,6 +553,15 @@ function gameLoop(currentTime) {
             spawnPiece();
         }
         dropTime = 0;
+    }
+    
+    // Handle garbage line generation (test: generate after 5 seconds)
+    if (garbageTimer >= garbageInterval && (currentTime - gameStartTime) > 5000) {
+        console.log("Garbage timer triggered! Current time:", currentTime, "Game start time:", gameStartTime, "Elapsed:", currentTime - gameStartTime);
+        insertGarbageLine();
+        garbageTimer = 0;
+    } else if (garbageTimer >= garbageInterval) {
+        console.log("Garbage timer ready but waiting for 5 seconds. Elapsed:", currentTime - gameStartTime);
     }
     
     drawBoard();
@@ -378,6 +579,9 @@ function startGame() {
         lines = 0;
         dropTime = 0;
         dropInterval = 1000;
+        garbageTimer = 0;
+        garbageLinesCleared = 0;
+        gameStartTime = performance.now();
         gameRunning = true;
         gamePaused = false;
         
@@ -409,6 +613,8 @@ function resetGame() {
     score = 0;
     level = 1;
     lines = 0;
+    garbageTimer = 0;
+    garbageLinesCleared = 0;
     currentPiece = null;
     
     updateDisplay();
@@ -456,6 +662,8 @@ document.addEventListener('keydown', (e) => {
 function init() {
     initBoard();
     initNextPieces();
+    garbageTimer = 0;
+    garbageLinesCleared = 0;
     drawBoard();
     drawNextPieces();
     updateDisplay();
