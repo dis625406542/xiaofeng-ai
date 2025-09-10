@@ -361,11 +361,19 @@ function isCollision(piece, dx = 0, dy = 0) {
                 const newX = piece.x + x + dx;
                 const newY = piece.y + y + dy;
                 
-                if (newX < 0 || newX >= BOARD_WIDTH || 
-                    newY >= BOARD_HEIGHT || 
-                    (newY >= 0 && gameBoard[newY][newX] && 
-                     gameBoard[newY][newX] !== GARBAGE_EMPTY_COLOR)) {
+                // 检查边界
+                if (newX < 0 || newX >= BOARD_WIDTH || newY >= BOARD_HEIGHT) {
                     return true;
+                }
+                
+                // 检查是否与已放置的方块碰撞
+                if (newY >= 0) {
+                    const cellValue = gameBoard[newY][newX];
+                    // 如果位置不为空（不是0）且不是垃圾行的空位，则发生碰撞
+                    if (cellValue && cellValue !== 0 && cellValue !== GARBAGE_EMPTY_COLOR) {
+                        console.log(`Collision detected at (${newX}, ${newY}): cellValue = "${cellValue}"`);
+                        return true;
+                    }
                 }
             }
         }
@@ -403,16 +411,16 @@ function clearLines() {
         }
         
         if (isComplete) {
-            // Check if this line contains garbage blocks
-            let hasGarbage = false;
+            // Check if this line is a garbage line (mostly garbage blocks with one empty space)
+            let garbageCount = 0;
             for (let x = 0; x < BOARD_WIDTH; x++) {
                 if (gameBoard[y][x] === GARBAGE_COLOR) {
-                    hasGarbage = true;
-                    break;
+                    garbageCount++;
                 }
             }
             
-            if (hasGarbage) {
+            // 如果这一行有9个垃圾方块（垃圾行的特征），则认为是垃圾行
+            if (garbageCount >= 9) {
                 garbageLinesInCleared++;
             }
             
@@ -495,7 +503,7 @@ function movePiece(dx, dy) {
 // Drop piece to bottom
 function hardDrop() {
     while (movePiece(0, 1)) {
-        score += 2;
+        // 硬降落不再给分数奖励
     }
     placePiece();
     clearLines();
@@ -648,10 +656,7 @@ document.addEventListener('keydown', (e) => {
             break;
         case 'ArrowDown':
             e.preventDefault();
-            if (movePiece(0, 1)) {
-                score += 1;
-                updateDisplay();
-            }
+            movePiece(0, 1);
             break;
         case 'ArrowUp':
             e.preventDefault();
