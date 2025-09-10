@@ -76,7 +76,7 @@ let lastTime = 0;
 
 // Garbage line system
 let garbageTimer = 0;
-let garbageInterval = 5000; // 5 seconds (增加间隔)
+let garbageInterval = 3000; // 3 seconds (恢复3秒间隔)
 let garbageLinesCleared = 0;
 let gameStartTime = 0;
 
@@ -158,28 +158,28 @@ function generateGarbageLine() {
 function insertGarbageLine() {
     console.log("Generating garbage line...");
     
-    // 检查游戏板是否有方块
-    let hasBlocks = false;
+    // 检查游戏板是否完全为空（没有任何方块）
+    let isCompletelyEmpty = true;
     for (let y = 0; y < BOARD_HEIGHT; y++) {
         for (let x = 0; x < BOARD_WIDTH; x++) {
-            if (gameBoard[y][x] !== 0 && gameBoard[y][x] !== GARBAGE_COLOR && gameBoard[y][x] !== GARBAGE_EMPTY_COLOR) {
-                hasBlocks = true;
+            if (gameBoard[y][x] !== 0) {
+                isCompletelyEmpty = false;
                 break;
             }
         }
-        if (hasBlocks) break;
+        if (!isCompletelyEmpty) break;
     }
     
-    if (hasBlocks) {
-        console.log("Game board has blocks, shifting up...");
-        // 移除顶部一行
-        gameBoard.pop();
-        // 在底部插入新的垃圾行
-        gameBoard.unshift(generateGarbageLine());
-    } else {
-        console.log("Game board is empty, inserting at bottom...");
-        // 如果游戏板是空的，直接在底部插入垃圾行
+    if (isCompletelyEmpty) {
+        console.log("Game board is completely empty, inserting at bottom...");
+        // 如果游戏板完全为空，直接在底部插入垃圾行
         gameBoard[BOARD_HEIGHT - 1] = generateGarbageLine();
+    } else {
+        console.log("Game board has content, shifting up...");
+        // 移除顶部一行
+        gameBoard.shift(); // 使用shift()移除顶部
+        // 在底部插入新的垃圾行
+        gameBoard.push(generateGarbageLine()); // 使用push()在底部插入
     }
     
     console.log("Garbage line inserted. Game board length:", gameBoard.length);
@@ -625,6 +625,15 @@ function resetGame() {
     pauseBtn.disabled = true;
     pauseBtn.textContent = 'Pause';
     gameOverlay.style.display = 'none';
+}
+
+// Play again - reset and start immediately
+function playAgain() {
+    // Reset the game
+    resetGame();
+    
+    // Start the game immediately
+    startGame();
 }
 
 // Keyboard controls
