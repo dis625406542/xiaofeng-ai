@@ -6,10 +6,62 @@
 
 body {
     font-family: 'Orbitron', monospace;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #000;
     min-height: 100vh;
     color: #fff;
     overflow-x: hidden;
+    position: relative;
+}
+
+/* 动态滚动背景 */
+.animated-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+    background: #000; /* 备用背景色 */
+}
+
+#backgroundCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 400vh;
+    z-index: -1;
+    animation: backgroundScroll 120s linear infinite;
+}
+
+.background-strip {
+    width: 100%;
+    height: 400vh; /* 4倍高度，容纳4张图片 */
+    background-image: 
+        url('public/01.jpeg'),
+        url('public/02.jpeg'),
+        url('public/03.jpeg'),
+        url('public/04.jpeg');
+    background-size: 100% 25%; /* 每张图片占25%高度 */
+    background-position: 
+        0 0%,
+        0 25%,
+        0 50%,
+        0 75%;
+    background-repeat: no-repeat;
+    animation: backgroundScroll 120s linear infinite;
+    background-attachment: fixed;
+    transform: translateY(0); /* 初始位置，显示第一张图 */
+}
+
+@keyframes backgroundScroll {
+    0% {
+        transform: translateY(0); /* 从0%位置开始，显示第一张图 */
+    }
+    100% {
+        transform: translateY(-75%); /* 滚动到-75%位置，显示最后一张图 */
+    }
 }
 
 .container {
@@ -19,6 +71,8 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    position: relative;
+    z-index: 1;
 }
 
 header {
@@ -60,11 +114,12 @@ header {
 
 .game-area {
     position: relative;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.6);
     border-radius: 15px;
     padding: 20px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     border: 2px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
 }
 
 #gameCanvas {
@@ -111,12 +166,13 @@ header {
 }
 
 .next-pieces {
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.6);
     border-radius: 15px;
     padding: 20px;
     text-align: center;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     border: 2px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
 }
 
 .next-pieces h3 {
@@ -157,11 +213,12 @@ header {
 }
 
 .score-board {
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.6);
     border-radius: 15px;
     padding: 20px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     border: 2px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
 }
 
 .score-item {

@@ -427,13 +427,25 @@ function clearLines() {
         lines += linesCleared;
         garbageLinesCleared += garbageLinesInCleared;
         
-        // Base score for clearing lines
-        let baseScore = linesCleared * 100 * level;
+        // 新的分值计算规则
+        let totalScore = 0;
         
-        // Bonus score for clearing garbage lines
-        let garbageBonus = garbageLinesInCleared * 200 * level;
+        // 计算普通行和垃圾行的分数
+        let normalLinesCleared = linesCleared - garbageLinesInCleared;
         
-        score += baseScore + garbageBonus;
+        // 普通行：每行1分
+        totalScore += normalLinesCleared * 1;
+        
+        // 垃圾行：每行5分
+        totalScore += garbageLinesInCleared * 5;
+        
+        // 一次性消灭3行的额外奖励：+2分
+        if (linesCleared >= 3) {
+            totalScore += 2;
+            console.log(`Triple line clear bonus! +2 points`);
+        }
+        
+        score += totalScore;
         level = Math.floor(lines / 10) + 1;
         dropInterval = Math.max(100, 1000 - (level - 1) * 100);
         
@@ -445,10 +457,8 @@ function clearLines() {
             scoreElement.classList.remove('score-update');
         }, 300);
         
-        // Show garbage line clear bonus if applicable
-        if (garbageLinesInCleared > 0) {
-            console.log(`Cleared ${garbageLinesInCleared} garbage line(s)! Bonus: ${garbageBonus} points`);
-        }
+        // Show detailed scoring info
+        console.log(`Cleared ${linesCleared} line(s): ${normalLinesCleared} normal (+${normalLinesCleared} points), ${garbageLinesInCleared} garbage (+${garbageLinesInCleared * 5} points), Total: +${totalScore} points`);
     }
 }
 
@@ -665,5 +675,72 @@ function init() {
     updateDisplay();
 }
 
+// 合并背景图片
+function mergeBackgroundImages() {
+    const canvas = document.getElementById('backgroundCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // 设置canvas样式
+    canvas.style.position = 'absolute';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.width = '100%';
+    canvas.style.height = '400vh';
+    canvas.style.zIndex = '-1';
+    
+    const images = [];
+    const imageUrls = ['public/01.jpeg', 'public/02.jpeg', 'public/03.jpeg', 'public/04.jpeg'];
+    let loadedCount = 0;
+    
+    // 加载所有图片
+    imageUrls.forEach((url, index) => {
+        const img = new Image();
+        img.onload = function() {
+            images[index] = img;
+            loadedCount++;
+            
+            // 当所有图片都加载完成后，开始合并
+            if (loadedCount === imageUrls.length) {
+                drawMergedBackground(ctx, images);
+            }
+        };
+        img.onerror = function() {
+            console.log('Failed to load image:', url);
+            loadedCount++;
+            if (loadedCount === imageUrls.length) {
+                drawMergedBackground(ctx, images);
+            }
+        };
+        img.src = url;
+    });
+}
+
+// 绘制合并后的背景
+function drawMergedBackground(ctx, images) {
+    const canvasWidth = 1920;
+    const canvasHeight = 7680; // 4倍高度
+    const imageHeight = canvasHeight / 4; // 每张图片的高度
+    
+    // 清除canvas
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+    
+    // 绘制每张图片
+    images.forEach((img, index) => {
+        if (img) {
+            const y = index * imageHeight;
+            ctx.drawImage(img, 0, y, canvasWidth, imageHeight);
+        }
+    });
+    
+    // 隐藏原来的背景strip
+    const backgroundStrip = document.getElementById('backgroundStrip');
+    if (backgroundStrip) {
+        backgroundStrip.style.display = 'none';
+    }
+}
+
 // Start the game when page loads
-window.addEventListener('load', init); 
+window.addEventListener('load', function() {
+    init();
+    mergeBackgroundImages();
+}); 
