@@ -409,7 +409,7 @@ function clearLines() {
     for (let y = BOARD_HEIGHT - 1; y >= 0; y--) {
         let isComplete = true;
         for (let x = 0; x < BOARD_WIDTH; x++) {
-            if (!gameBoard[y][x]) {
+            if (!gameBoard[y][x] || gameBoard[y][x] === 0 || gameBoard[y][x] === GARBAGE_EMPTY_COLOR) {
                 isComplete = false;
                 break;
             }
