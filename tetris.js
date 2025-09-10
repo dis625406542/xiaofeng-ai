@@ -694,7 +694,7 @@ function mergeBackgroundImages() {
     canvas.style.zIndex = '-1';
     
     const images = [];
-    const imageUrls = ['public/01.jpeg', 'public/02.jpeg', 'public/03.jpeg', 'public/04.jpeg'];
+    const imageUrls = ['01.jpeg', '02.jpeg', '03.jpeg', '04.jpeg'];
     let loadedCount = 0;
     
     // 加载所有图片
