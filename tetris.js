@@ -262,27 +262,13 @@ function drawBlock(ctx, x, y, color) {
         ctx.strokeRect(blockX, blockY, BLOCK_SIZE, BLOCK_SIZE);
         
     } else if (color === GARBAGE_EMPTY_COLOR) {
-        // 垃圾行空位：显示为背景色，但有特殊轮廓
+        // 垃圾行空位：显示为普通黑色背景，无特殊效果
         const blockX = x * BLOCK_SIZE;
         const blockY = y * BLOCK_SIZE;
         
         // 背景色填充
         ctx.fillStyle = '#000000';
         ctx.fillRect(blockX, blockY, BLOCK_SIZE, BLOCK_SIZE);
-        
-        // 虚线边框表示这是垃圾行的空位
-        ctx.strokeStyle = '#666666';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([4, 4]);
-        ctx.strokeRect(blockX + 1, blockY + 1, BLOCK_SIZE - 2, BLOCK_SIZE - 2);
-        ctx.setLineDash([]);
-        
-        // 内部虚线
-        ctx.strokeStyle = '#444444';
-        ctx.lineWidth = 1;
-        ctx.setLineDash([2, 2]);
-        ctx.strokeRect(blockX + 4, blockY + 4, BLOCK_SIZE - 8, BLOCK_SIZE - 8);
-        ctx.setLineDash([]);
         
     } else {
         // 普通方块
@@ -377,7 +363,8 @@ function isCollision(piece, dx = 0, dy = 0) {
                 
                 if (newX < 0 || newX >= BOARD_WIDTH || 
                     newY >= BOARD_HEIGHT || 
-                    (newY >= 0 && gameBoard[newY][newX])) {
+                    (newY >= 0 && gameBoard[newY][newX] && 
+                     gameBoard[newY][newX] !== GARBAGE_EMPTY_COLOR)) {
                     return true;
                 }
             }
