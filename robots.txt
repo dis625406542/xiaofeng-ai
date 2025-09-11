@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://xiaofeng-ai.com/sitemap.xml
+Sitemap: https://www.xiaofeng-ai.com/sitemap.xml
